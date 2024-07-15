@@ -1,4 +1,5 @@
-kolla_internal_vip_address: "API interface IP" # If no haproxy, else VIP
+openstack_vip: "192.168.64.250" # Defined by us
+kolla_internal_vip_address: "{{ openstack_vip }}" # If no haproxy, API interface IP; else VIP
 kolla_base_distro: "rocky"
 kolla_container_engine: docker
 rabbitmq_enable_tls: "no"
@@ -7,7 +8,7 @@ tunnel_interface: "eth1"
 api_interface: "{{ network_interface }}"
 # Valid options are [ ipv4, ipv6 ]
 network_address_family: "ipv4"
-neutron_external_interface: "eth0"
+neutron_external_interface: "eth2"
 neutron_plugin_agent: "openvswitch"
 enable_neutron_packet_logging: "no"
 kolla_enable_tls_internal: "no"
