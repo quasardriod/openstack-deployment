@@ -2,7 +2,7 @@
 # additional groups are for more control of the environment.
 [control]
 # These hostname must be resolvable from your deployment host
-ost-ctrl ansible_host=192.168.64.51 ansible_ssh_user=root ansible_private_key_file=~/.ssh/id_rsa
+ost-ctrl ansible_host=192.168.10.16 ansible_ssh_user=root ansible_private_key_file=~/.ssh/id_rsa
 
 # The above can also be specified as follows:
 #control[01:03]     ansible_user=kolla
@@ -10,13 +10,13 @@ ost-ctrl ansible_host=192.168.64.51 ansible_ssh_user=root ansible_private_key_fi
 # The network nodes are where your l3-agent and loadbalancers will run
 # This can be the same as a host in the control group
 [network]
-ost-ctrl ansible_host=192.168.64.51 ansible_ssh_user=root ansible_private_key_file=~/.ssh/id_rsa
+ost-ctrl ansible_host=192.168.10.16 ansible_ssh_user=root ansible_private_key_file=~/.ssh/id_rsa
 
 [compute]
-ost-com ansible_host=192.168.64.195 ansible_ssh_user=root ansible_private_key_file=~/.ssh/id_rsa
+ost-com ansible_host=192.168.10.25 ansible_ssh_user=root ansible_private_key_file=~/.ssh/id_rsa
 
 [monitoring]
-ost-ctrl ansible_host=192.168.64.51 ansible_ssh_user=root ansible_private_key_file=~/.ssh/id_rsa
+ost-ctrl ansible_host=192.168.10.16 ansible_ssh_user=root ansible_private_key_file=~/.ssh/id_rsa
 
 # When compute nodes and control nodes use different interfaces,
 # you need to comment out "api_interface" and other interfaces from the globals.yml
@@ -24,7 +24,7 @@ ost-ctrl ansible_host=192.168.64.51 ansible_ssh_user=root ansible_private_key_fi
 #compute01 neutron_external_interface=eth0 api_interface=em1 tunnel_interface=em1
 
 [storage]
-ost-ctrl ansible_host=192.168.64.51 ansible_ssh_user=root ansible_private_key_file=~/.ssh/id_rsa
+ost-ctrl ansible_host=192.168.10.16 ansible_ssh_user=root ansible_private_key_file=~/.ssh/id_rsa
 #storage01
 
 [deployment]

@@ -10,7 +10,7 @@
     epel_repo:
     - os: Rocky
       package: epel-release
-    build_type: aio #[mutlinode, aio]
+    build_type: multinode #[mutlinode, aio]
     #local_registry_name: registry
     #kolla_container_engine: docker
     #container_registry_host: "{{ ansible_host }}"
@@ -26,6 +26,12 @@
   - name: Install ansible collections
     ansible.builtin.dnf:
       name: "{{ install_collections.rpms }}"
+      state: latest
+
+  - name: Install Additional packages
+    ansible.builtin.dnf:
+      name:
+        - python3-pip
       state: latest
 
   - name: Ansible pip modules
@@ -109,16 +115,12 @@
       dest: /root/
       mode: 0755
 
-  - name: Set fact for openstack_vip
-    ansible.builtin.set_fact:
-      openstack_vip: ""
-
   - name: Include vars from globals-overwrite.yml
     ansible.builtin.include_vars:
       file: globals-overwrite.yml
 
-  - name: Template out globals.yml
-    ansible.builtin.template:
+  - name: Copy globals.yml
+    ansible.builtin.copy:
       src: globals-rocky-1-1.yml
       dest: /root/globals.yml
       mode: 0644

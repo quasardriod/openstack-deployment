@@ -30,7 +30,7 @@ function install_kolla_ansible(){
     [ ! -d /etc/kolla ] && mkdir -p /etc/kolla
     
     # Copy globals.yml and passwords.yml to /etc/kolla directory.
-    cp -r $PY_VENV/share/kolla-ansible/etc/kolla/* /etc/kolla
+    cp -r $PY_VENV/share/kolla-ansible/etc_examples/kolla/* /etc/kolla
     cp /root/globals.yml /etc/kolla/
 }
 
