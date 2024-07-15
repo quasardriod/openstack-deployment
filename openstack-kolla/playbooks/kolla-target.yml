@@ -21,31 +21,31 @@
       state: latest
     when: ansible_os_family == "RedHat"
 
-  - name: Install Required pip modules
-    ansible.builtin.pip:
-      name:
-      - podman
-    when: kolla_container_engine == "podman"
+#  - name: Install Required pip modules
+#    ansible.builtin.pip:
+#      name:
+#      - podman
+#    when: kolla_container_engine == "podman"
 
-  - name: Block to install docker packages
-    block:
-    - name: Install docker repo
-      ansible.builtin.command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-      changed_when: true
-      when: ansible_os_family == "RedHat"
+#  - name: Block to install docker packages
+#    block:
+#    - name: Install docker repo
+#      ansible.builtin.command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+#      changed_when: true
+#      when: ansible_os_family == "RedHat"
+#
+#    - name: Install Docker packages
+#      ansible.builtin.dnf:
+#        name:
+#        - docker-ce
+#        - docker-ce-cli
+#        - containerd.io
+#      when: ansible_os_family == "RedHat"
 
-    - name: Install Docker packages
-      ansible.builtin.dnf:
-        name:
-        - docker-ce
-        - docker-ce-cli
-        - containerd.io
-      when: ansible_os_family == "RedHat"
-
-    - name: Install Required pip modules
-      ansible.builtin.pip:
-        name:
-        - docker
+#    - name: Install Required pip modules
+#      ansible.builtin.pip:
+#        name:
+#        - docker
 
     # - name: Set insecure-registries
     #   ansible.builtin.template:
@@ -56,11 +56,11 @@
     #     group: root
     #   notify: restart_docker
 
-    - name: Start docker service
-      ansible.builtin.systemd:
-        name: docker
-        state: started
-        enabled: yes
-    when: kolla_container_engine == "docker"
+#    - name: Start docker service
+#      ansible.builtin.systemd:
+#        name: docker
+#        state: started
+#        enabled: yes
+#    when: kolla_container_engine == "docker"
 
 

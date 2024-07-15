@@ -1,44 +1,22 @@
 # These initial groups are the only groups required to be modified. The
 # additional groups are for more control of the environment.
 [control]
-# These hostname must be resolvable from your deployment host
-ost-ctrl ansible_host=192.168.64.51 ansible_ssh_user=root ansible_private_key_file=~/.ssh/id_rsa
+localhost       ansible_connection=local
 
-# The above can also be specified as follows:
-#control[01:03]     ansible_user=kolla
-
-# The network nodes are where your l3-agent and loadbalancers will run
-# This can be the same as a host in the control group
 [network]
-ost-ctrl ansible_host=192.168.64.51 ansible_ssh_user=root ansible_private_key_file=~/.ssh/id_rsa
+localhost       ansible_connection=local
 
 [compute]
-ost-com ansible_host=192.168.64.195 ansible_ssh_user=root ansible_private_key_file=~/.ssh/id_rsa
-
-[monitoring]
-ost-ctrl ansible_host=192.168.64.51 ansible_ssh_user=root ansible_private_key_file=~/.ssh/id_rsa
-
-# When compute nodes and control nodes use different interfaces,
-# you need to comment out "api_interface" and other interfaces from the globals.yml
-# and specify like below:
-#compute01 neutron_external_interface=eth0 api_interface=em1 tunnel_interface=em1
+localhost       ansible_connection=local
 
 [storage]
-ost-ctrl ansible_host=192.168.64.51 ansible_ssh_user=root ansible_private_key_file=~/.ssh/id_rsa
-#storage01
+localhost       ansible_connection=local
+
+[monitoring]
+localhost       ansible_connection=local
 
 [deployment]
 localhost       ansible_connection=local
-
-[baremetal:children]
-control
-network
-compute
-storage
-monitoring
-
-[tls-backend:children]
-control
 
 # You can explicitly specify which hosts run each project by updating the
 # groups in the sections below. Common services are grouped together.
@@ -53,17 +31,17 @@ monitoring
 [collectd:children]
 compute
 
+[baremetal:children]
+control
+
+[tls-backend:children]
+control
+
 [grafana:children]
 monitoring
 
 [etcd:children]
 control
-
-[influxdb:children]
-monitoring
-
-[prometheus:children]
-monitoring
 
 [telegraf:children]
 compute
@@ -128,6 +106,12 @@ control
 [ironic:children]
 control
 
+[influxdb:children]
+monitoring
+
+[prometheus:children]
+monitoring
+
 [magnum:children]
 control
 
@@ -135,6 +119,9 @@ control
 control
 
 [manila:children]
+control
+
+[gnocchi:children]
 control
 
 [ceilometer:children]
@@ -146,9 +133,6 @@ control
 [cyborg:children]
 control
 compute
-
-[gnocchi:children]
-control
 
 [tacker:children]
 control
@@ -262,6 +246,9 @@ neutron
 compute
 network
 
+[neutron-ovn-agent:children]
+compute
+
 [neutron-bgp-dragent:children]
 neutron
 
@@ -273,10 +260,6 @@ neutron
 
 [ironic-neutron-agent:children]
 neutron
-
-[neutron-ovn-agent:children]
-compute
-network
 
 # Cinder
 [cinder-api:children]
@@ -343,6 +326,16 @@ barbican
 [barbican-worker:children]
 barbican
 
+# Trove
+[trove-api:children]
+trove
+
+[trove-conductor:children]
+trove
+
+[trove-taskmanager:children]
+trove
+
 # Heat
 [heat-api:children]
 heat
@@ -389,19 +382,6 @@ mistral
 [mistral-event-engine:children]
 mistral
 
-# Ceilometer
-[ceilometer-central:children]
-ceilometer
-
-[ceilometer-notification:children]
-ceilometer
-
-[ceilometer-compute:children]
-compute
-
-[ceilometer-ipmi:children]
-compute
-
 # Aodh
 [aodh-api:children]
 aodh
@@ -435,15 +415,18 @@ gnocchi
 [gnocchi-metricd:children]
 gnocchi
 
-# Trove
-[trove-api:children]
-trove
+# Ceilometer
+[ceilometer-central:children]
+ceilometer
 
-[trove-conductor:children]
-trove
+[ceilometer-notification:children]
+ceilometer
 
-[trove-taskmanager:children]
-trove
+[ceilometer-compute:children]
+compute
+
+[ceilometer-ipmi:children]
+compute
 
 # Multipathd
 [multipathd:children]

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eo pipefail
+
 PY_VENV=/root/kolla-venv
 
 # Install Required packages on localhost
@@ -19,16 +21,16 @@ function py_venv(){
     source $PY_VENV/bin/activate
     pip install -U pip
     pip install 'ansible-core>=2.15,<2.16.99'
+		pip install oslo_utils
 }
 
 function install_kolla_ansible(){
-    # source $PY_VENV/bin/activate
-    # pip install git+https://opendev.org/openstack/kolla-ansible@master
-    git clone --branch master https://opendev.org/openstack/kolla-ansible
+    source $PY_VENV/bin/activate
+    pip install git+https://opendev.org/openstack/kolla-ansible@master
     [ ! -d /etc/kolla ] && mkdir -p /etc/kolla
     
     # Copy globals.yml and passwords.yml to /etc/kolla directory.
-    cp -r kolla-ansible/etc/kolla/* /etc/kolla
+    cp -r $PY_VENV/share/kolla-ansible/etc/kolla/* /etc/kolla
     cp /root/globals.yml /etc/kolla/
 }
 
@@ -39,7 +41,7 @@ function install_galaxy_requirements(){
 
 function prepare_initial_configuration(){
     source $PY_VENV/bin/activate
-    cd kolla-ansible/tools && ./generate_passwords.py
+    kolla-genpwd
 }
 
 function main(){
