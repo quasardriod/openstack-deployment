@@ -1,0 +1,7 @@
+ost-com ansible_host=192.168.10.71
+ost-ctrl ansible_host=192.168.10.99
+[all:vars]
+ansible_user=root
+# ansible_private_key=/home/sumit/.ssh/id_rsa.pub
+ansible_password=redhat
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'

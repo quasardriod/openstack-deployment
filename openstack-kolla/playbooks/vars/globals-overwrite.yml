@@ -1,0 +1,22 @@
+# docker_registry: 192.168.1.100:4000 # IP addess when registry is running, in our case kolla-deployer
+# docker_registry_insecure: yes
+kolla_base_distro: "rocky"
+kolla_container_engine: docker
+rabbitmq_enable_tls: "no"
+network_interface: "eth0"
+tunnel_interface: "eth1"
+api_interface: "{{ network_interface }}"
+# Valid options are [ ipv4, ipv6 ]
+network_address_family: "ipv4"
+neutron_external_interface: "eth0"
+neutron_plugin_agent: "openvswitch"
+enable_neutron_packet_logging: "no"
+kolla_enable_tls_internal: "no"
+kolla_enable_tls_backend: "no"
+openstack_region_name: "Apac"
+enable_openstack_core: "yes"
+enable_haproxy: "no"
+enable_cinder: "no"
+glance_backend_file: "yes"
+nova_compute_virt_type: "kvm"
+nova_console: "novnc"

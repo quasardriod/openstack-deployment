@@ -1,0 +1,122 @@
+
+- hosts: all
+  gather_facts: true
+  vars:
+    kolla_deployer_ssh_pub: kolla-deployer-id_rsa.pub
+    install_collections:
+      rpms:
+      - ansible-collection-community-crypto
+      - ansible-collection-community-general
+    epel_repo:
+    - os: Rocky
+      package: epel-release
+    local_registry_name: registry
+    kolla_container_engine: docker
+    container_registry_host: "{{ ansible_host }}"
+
+  tasks:
+  - name: Install epel repo
+    ansible.builtin.dnf:
+      name: "{{ item.package }}"
+      state: latest
+    with_items: "{{ epel_repo }}"
+    when: item.os == ansible_distribution
+
+  - name: Install ansible collections
+    ansible.builtin.dnf:
+      name: "{{ install_collections.rpms }}"
+      state: latest
+
+  - name: Block to setup docker on kolla deployer
+    block:
+    - name: Install podman
+      ansible.builtin.dnf:
+        name:
+        - podman
+        - container-tools
+
+    - name: Check if local container registry already exists using podman
+      ansible.builtin.shell: |
+        podman container exists {{ local_registry_name }}
+      changed_when: false
+      ignore_errors: true
+      register: _container_registry
+    when: kolla_container_engine == "podman"
+
+  - name: Block to setup docker on kolla deployer
+    block:
+    - name: Install docker repo
+      ansible.builtin.command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+      changed_when: true
+      when: ansible_os_family == "RedHat"
+
+    - name: Install Docker packages
+      ansible.builtin.dnf:
+        name:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+      when: ansible_os_family == "RedHat"
+
+    # - name: Set insecure-registries
+    #   ansible.builtin.template:
+    #     src: docker-daemon.json
+    #     dest: /etc/docker/daemon.json
+    #     mode: 0644
+    #     owner: root
+    #     group: root
+
+    - name: Start docker service
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Check if local container registry already exists using docker
+      ansible.builtin.shell: |
+        docker container inspect {{ local_registry_name }}
+      changed_when: false
+      ignore_errors: true
+      register: _container_registry
+    when: kolla_container_engine == "docker"
+
+  - name: Start local container registry
+    ansible.builtin.shell: |
+      {{ kolla_container_engine }} run -d \
+      --network host \
+      --name {{ local_registry_name }} \
+      --restart=always \
+      -e REGISTRY_HTTP_ADDR=0.0.0.0:4000 \
+      -v {{ local_registry_name }}:/var/lib/registry \
+      registry:2
+    when: _container_registry.rc == 1
+
+  - name: Generate an OpenSSH keypair
+    community.crypto.openssh_keypair:
+      path: "{{ ansible_env.HOME }}/.ssh/id_rsa"
+      owner: root
+      group: root
+      type: rsa
+
+  - name: Copy kolla-env setup script
+    ansible.builtin.copy:
+      src: kolla-deployment-host.sh
+      dest: /root/
+      mode: 0755
+
+  - name: Copy globals.yml
+    ansible.builtin.copy:
+      src: globals-rocky-1-1.yml
+      dest: /root/globals.yml
+      mode: 0644
+
+  # - name: Fetch deployer ssh public key
+  #   ansible.builtin.fetch:
+  #     src: "{{ ansible_env.HOME }}/.ssh/id_rsa.pub"
+  #     dest: "../../kolla-tmp/{{ kolla_deployer_ssh_pub }}"
+  #     mode: 0644
+
+  - ansible.builtin.debug:
+      msg: "Update docker_registry and docker_registry_insecure vars in globals.yml"
+
+

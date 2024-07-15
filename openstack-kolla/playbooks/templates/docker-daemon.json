@@ -1,0 +1,3 @@
+{
+    "insecure-registries" : [ "{{ container_registry_host }}:4000" ]
+}
