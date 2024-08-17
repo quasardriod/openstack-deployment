@@ -1,5 +1,6 @@
-ost-com ansible_host=192.168.10.25
-ost-ctrl ansible_host=192.168.10.16
+ost-com ansible_host=192.168.10.25 node_role=compute
+ost-ctrl ansible_host=192.168.10.16 node_role=control
+
 [all:vars]
 ansible_user=root
 # ansible_private_key=/home/sumit/.ssh/id_rsa.pub

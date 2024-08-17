@@ -3,10 +3,10 @@
 This role provides capability to make custom OS configure as listed below:
 
 - Set Hostname
-- Set Sudo access for {{ansible_user}}
+- Set Sudo access for {{ ansible_user }}
 - Install Public Key on target machines
 - Set Root password
-- Allow Root logic over ssh
+- Allow Root login over ssh
 
 ## Variables Annotation
 - In [Default Vars](./defaults/main.yml), `pub_key_on_localhost` is set to read public key from localhost. Overwrite default value using `-e pub_key_on_localhost=<path of public key on localhost>`

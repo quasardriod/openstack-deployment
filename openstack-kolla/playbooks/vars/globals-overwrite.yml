@@ -1,20 +1,31 @@
-openstack_vip: "192.168.64.250" # Defined by us
+# openstack_vip: If you have only one controller, define the IP address that is going to serve API traffic
+# If 3 controllers, VIP of HAPROXY
+openstack_vip: "192.168.64.250"
+build_type: multinode #[mutlinode, aio]
+epel_repo:
+- os: Rocky
+  package: epel-release
+
+# Full path of the Openstack Kolla Nodes inventory on those Openstack will be deployed
+# Else provide the file name from ../files/ost-nodes-inventory directory
+ost_nodes_inventory: "multinode-1"
+
+# Overwrite globals.yml
 kolla_internal_vip_address: "{{ openstack_vip }}" # If no haproxy, API interface IP; else VIP
 kolla_base_distro: "rocky"
 kolla_container_engine: docker
 rabbitmq_enable_tls: "no"
 network_interface: "eth0"
-tunnel_interface: "eth1"
-api_interface: "{{ network_interface }}"
+tunnel_interface: "eth0"
+api_interface: "eth0"
 # Valid options are [ ipv4, ipv6 ]
 network_address_family: "ipv4"
-neutron_external_interface: "eth2"
+neutron_external_interface: "eth1"
 neutron_plugin_agent: "openvswitch"
 enable_neutron_packet_logging: "no"
 kolla_enable_tls_internal: "no"
 kolla_enable_tls_backend: "no"
-openstack_region_name: "Apac"
-enable_openstack_core: "yes"
+openstack_region_name: "APAC"
 enable_haproxy: "no"
 enable_cinder: "no"
 glance_backend_file: "yes"

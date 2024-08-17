@@ -2,14 +2,14 @@
 
 set -eo pipefail
 
-PY_VENV=/root/kolla-venv
+PY_VENV=$PWD/kolla-venv
 
 # Install Required packages on localhost
 function install_dependencies(){
     source /etc/os-release
     printf "\nINFO: Installing packages dependencies on Kolla ansible deployment host...\n"    
 
-    if [[ $ID =~ fedora ]];then
+    if [[ $ID =~ fedora|rocky ]];then
         sudo dnf install -y -q \
             git python3-devel libffi-devel gcc openssl-devel python3-libselinux
     fi

@@ -7,15 +7,41 @@
       rpms:
       - ansible-collection-community-crypto
       - ansible-collection-community-general
-    epel_repo:
-    - os: Rocky
-      package: epel-release
-    build_type: multinode #[mutlinode, aio]
-    #local_registry_name: registry
-    #kolla_container_engine: docker
-    #container_registry_host: "{{ ansible_host }}"
+
+  vars_files:
+  - globals-overwrite.yml
 
   tasks:
+  # - name: Block to Generate inventory for multinode
+  #   block:
+  #   - name: Get openstack hosts from target inventory
+  #     ansible.builtin.shell: ansible-inventory -i {{ TARGET_INVENTORY }} --list|jq '._meta.hostvars|keys'|yq .
+  #     register: _host_keys
+
+  #   - name: Set fact target_openstack_nodes
+  #     ansible.builtin.set_fact:
+  #       target_openstack_nodes: "{{ _host_keys.stdout }}"
+
+  #   - name: Show target_openstack_nodes
+  #     ansible.builtin.debug:
+  #       var: target_openstack_nodes
+
+  #   - name: Set fact control and compute lists
+  #     ansible.builtin.set_fact:
+  #       control: []
+  #       compute: []
+
+  #   - name: Append 
+  #     ansible.builtin.shell: ansible-inventory -i {{ TARGET_INVENTORY }} --list|jq '._meta.hostvars|keys'|yq .
+  #     with_items: "{{ target_openstack_nodes }}"
+  #   when:
+  #   - build_type == "multinode"
+  #   - generate_multinode_inventory|bool
+
+  # - name: Include vars from globals-overwrite.yml
+  #   ansible.builtin.include_vars:
+  #     file: globals-overwrite.yml
+
   - name: Install epel repo
     ansible.builtin.dnf:
       name: "{{ item.package }}"
@@ -28,120 +54,42 @@
       name: "{{ install_collections.rpms }}"
       state: latest
 
-  - name: Install Additional packages
-    ansible.builtin.dnf:
-      name:
-        - python3-pip
-      state: latest
-
-  - name: Ansible pip modules
-    ansible.builtin.pip:
-      name: docker
-
-    #  - name: Block to setup docker on kolla deployer
-    #    block:
-    #    - name: Install podman
-    #      ansible.builtin.dnf:
-    #        name:
-    #        - podman
-    #        - container-tools
-
-    #    - name: Check if local container registry already exists using podman
-    #      ansible.builtin.shell: |
-    #        podman container exists {{ local_registry_name }}
-    #      changed_when: false
-    #      ignore_errors: true
-    #      register: _container_registry
-    #    when: kolla_container_engine == "podman"
-
-    #  - name: Block to setup docker on kolla deployer
-    #    block:
-    #    - name: Install docker repo
-    #      ansible.builtin.command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-    #      changed_when: true
-    #      when: ansible_os_family == "RedHat"
-
-    #    - name: Install Docker packages
-    #      ansible.builtin.dnf:
-    #        name:
-    #        - docker-ce
-    #        - docker-ce-cli
-    #        - containerd.io
-    #      when: ansible_os_family == "RedHat"
-
-    # - name: Set insecure-registries
-    #   ansible.builtin.template:
-    #     src: docker-daemon.json
-    #     dest: /etc/docker/daemon.json
-    #     mode: 0644
-    #     owner: root
-    #     group: root
-
-  - name: Generate an OpenSSH keypair
-    #    - name: Start docker service
-    #      ansible.builtin.systemd:
-    #        name: docker
-    #        state: started
-    #        enabled: yes
-
-    #    - name: Check if local container registry already exists using docker
-    #      ansible.builtin.shell: |
-    #        docker container inspect {{ local_registry_name }}
-    #      changed_when: false
-    #      ignore_errors: true
-    #      register: _container_registry
-    #    when: kolla_container_engine == "docker"
-
-    #  - name: Start local container registry
-    #    ansible.builtin.shell: |
-    #      {{ kolla_container_engine }} run -d \
-    #      --network host \
-    #      --name {{ local_registry_name }} \
-    #      --restart=always \
-    #      -e REGISTRY_HTTP_ADDR=0.0.0.0:4000 \
-    #      -v {{ local_registry_name }}:/var/lib/registry \
-    #      registry:2
-    #    when: _container_registry.rc == 1
-
-    community.crypto.openssh_keypair:
-      path: "{{ ansible_env.HOME }}/.ssh/id_rsa"
-      owner: root
-      group: root
-      type: rsa
-
   - name: Copy kolla-env setup script
     ansible.builtin.copy:
       src: kolla-deployment-host.sh
       dest: /root/
       mode: 0755
 
-  - name: Include vars from globals-overwrite.yml
-    ansible.builtin.include_vars:
-      file: globals-overwrite.yml
+  - name: Set WORKDIR fact
+    ansible.builtin.set_fact:
+      WORKDIR: "{{ ansible_env.HOME }}"
+    when: WORKDIR is not defined and inventory_hostname != "localhost"
 
-  - name: Copy globals.yml
-    ansible.builtin.copy:
-      src: globals-rocky-1-1.yml
-      dest: /root/globals.yml
+  - name: Template out globals.yml
+    ansible.builtin.template:
+      src: globals.yml.j2
+      dest: "{{ WORKDIR }}/globals.yml"
       mode: 0644
+
+  - name: Get stat of "{{ ost_nodes_inventory }}"
+    ansible.builtin.stat:
+      path: "{{ ost_nodes_inventory }}"
+    register: _nodes_inventory
+
+  - name: Set fact ost_nodes_inventory
+    ansible.builtin.set_fact:
+      ost_nodes_inventory: "ost-nodes-inventory/{{ ost_nodes_inventory }}"
+    when: not _nodes_inventory.stat.exists
 
   - name: Copy multinode inventory file
     ansible.builtin.copy:
-      src: multinode-1-1
-      dest: /root/multinode
+      src: "{{ ost_nodes_inventory }}"
+      dest: "{{ WORKDIR }}/{{ build_type }}"
       mode: 0644
-    when: build_type == "multinode"
 
-  - name: Copy aio inventory file
-    ansible.builtin.copy:
-      src: all-in-one
-      dest: /root/all-in-one
-      mode: 0644
-    when: build_type == "aio"
-
-  # - name: Fetch deployer ssh public key
-  #   ansible.builtin.fetch:
-  #     src: "{{ ansible_env.HOME }}/.ssh/id_rsa.pub"
-  #     dest: "../../kolla-tmp/{{ kolla_deployer_ssh_pub }}"
-  #     mode: 0644
-
+  - name: Generate an OpenSSH keypair
+    community.crypto.openssh_keypair:
+      path: "{{ ansible_env.HOME }}/.ssh/id_rsa"
+      owner: root
+      group: root
+      type: rsa

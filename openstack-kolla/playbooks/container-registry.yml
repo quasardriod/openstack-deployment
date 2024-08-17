@@ -1,0 +1,74 @@
+
+- hosts: ost-registry-host
+  gather_facts: true
+  vars:
+    local_registry_name: registry
+    kolla_container_engine: docker # [docker, podman]
+    container_registry_host: "{{ ansible_host }}"
+
+  tasks:
+  - name: Block to setup docker on kolla deployer
+    block:
+    - name: Install podman
+      ansible.builtin.dnf:
+        name:
+        - podman
+        - container-tools
+
+    - name: Check if local container registry already exists using podman
+      ansible.builtin.shell: |
+        podman container exists {{ local_registry_name }}
+      changed_when: false
+      ignore_errors: true
+      register: _container_registry
+    when: kolla_container_engine == "podman"
+
+  - name: Block to setup docker on kolla deployer
+    block:
+    - name: Install docker repo
+      ansible.builtin.command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+      changed_when: true
+      when: ansible_os_family == "RedHat"
+
+    - name: Install Docker packages
+      ansible.builtin.dnf:
+        name:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+      when: ansible_os_family == "RedHat"
+
+    - name: Set insecure-registries
+      ansible.builtin.template:
+        src: docker-daemon.json
+        dest: /etc/docker/daemon.json
+        mode: 0644
+        owner: root
+        group: root
+
+    - name: Start docker service
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Check if local container registry already exists using docker
+      ansible.builtin.shell: |
+        docker container inspect {{ local_registry_name }}
+      changed_when: false
+      ignore_errors: true
+      register: _container_registry
+    when: kolla_container_engine == "docker"
+
+  - name: Start local container registry
+    ansible.builtin.shell: |
+      {{ kolla_container_engine }} run -d \
+      --network host \
+      --name {{ local_registry_name }} \
+      --restart=always \
+      -e REGISTRY_HTTP_ADDR=0.0.0.0:4000 \
+      -v {{ local_registry_name }}:/var/lib/registry \
+      registry:2
+    when: _container_registry.rc == 1
+
+

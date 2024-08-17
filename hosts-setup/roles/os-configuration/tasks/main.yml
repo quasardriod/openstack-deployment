@@ -14,6 +14,7 @@
   ansible.builtin.package:
     name:
     - vim
+    - python3-pip
     state: latest
   when: ansible_os_family in ["RedHat"]
 
@@ -27,27 +28,29 @@
   changed_when: true
   when: ansible_os_family in ["RedHat"]
 
-- name: Prepare hosts entry
-  ansible.builtin.shell: |
-    for h in {{ ansible_play_hosts|join(' ') }};do
-      ip=$(ansible-inventory -i {{ inventory_file }} --host $h|jq .ansible_host|sed -e 's/\"//g')
-      echo "$ip $h"
-    done
-  delegate_to: localhost
-  register: _hosts_entry
-  run_once: true
+##### Kolla adds entry in /etc/hosts---------
+# - name: Prepare hosts entry
+#   ansible.builtin.shell: |
+#     for h in {{ ansible_play_hosts|join(' ') }};do
+#       ip=$(ansible-inventory -i {{ inventory_file }} --host $h|jq .ansible_host|sed -e 's/\"//g')
+#       echo "$ip $h"
+#     done
+#   delegate_to: localhost
+#   register: _hosts_entry
+#   run_once: true
 
-- name: Show hosts entry
-  ansible.builtin.debug:
-    var: _hosts_entry.stdout_lines
-  run_once: true
+# - name: Show hosts entry
+#   ansible.builtin.debug:
+#     var: _hosts_entry.stdout_lines
+#   run_once: true
 
-- name: Add _hosts_entry in /etc/hosts
-  ansible.builtin.lineinfile:
-    path: /etc/hosts
-    regexp: "^{{ item.split(' ')[0] }}"
-    line: '{{ item }}'
-  with_items: "{{ _hosts_entry.stdout_lines }}"
+# - name: Add _hosts_entry in /etc/hosts
+#   ansible.builtin.lineinfile:
+#     path: /etc/hosts
+#     regexp: "^{{ item.split(' ')[0] }}"
+#     line: '{{ item }}'
+#   with_items: "{{ _hosts_entry.stdout_lines }}"
+#####-----------------------------------------------------
 
 # - name: Install packages on Ubuntu
 #   ansible.builtin.apt:
